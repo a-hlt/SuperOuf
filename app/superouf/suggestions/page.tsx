@@ -1,8 +1,8 @@
-import { fakeData } from "@/lib/fake-data";
+import { getSuggestions } from "@/app/actions/analytics";
 import { SuggestionsManager } from "@/components/superouf/suggestions-manager";
 
 export default async function SuggestionsPage() {
-    const suggestions = await fakeData.getSuggestions();
+    const suggestions = await getSuggestions();
 
     return (
         <div className="space-y-6">

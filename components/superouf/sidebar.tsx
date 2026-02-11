@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, Users, ShoppingCart, TrendingUp, Lightbulb, Zap, Settings } from "lucide-react";
+import { LayoutDashboard, Users, ShoppingCart, TrendingUp, Lightbulb, Zap } from "lucide-react";
 
 const sidebarItems = [
     {
@@ -31,11 +31,6 @@ const sidebarItems = [
         title: "Stats Catégories (US15)",
         href: "/superouf/category-stats",
         icon: Users,
-    },
-    {
-        title: "Paramètres",
-        href: "/superouf/settings",
-        icon: Settings,
     },
 ];
 

@@ -1,9 +1,9 @@
 
-import { fakeData } from "@/lib/fake-data";
+import { getCategoryStats } from "@/app/actions/analytics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 
 export default async function CategoryStatsPage() {
-    const stats = await fakeData.getCategoryStats();
+    const stats = await getCategoryStats();
 
     return (
         <div className="space-y-6">

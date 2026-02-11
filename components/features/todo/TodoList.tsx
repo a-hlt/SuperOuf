@@ -6,90 +6,98 @@ import { Search, Plus, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import {
-    Combobox,
-    ComboboxInput,
-    ComboboxContent,
-    ComboboxList,
-    ComboboxItem,
-    ComboboxEmpty,
-} from "@/components/ui/combobox"
 import { TodoItem } from "./TodoItem"
-import { ShoppingItem, ItemStatus } from "@/types/schema"
-import { MOCK_PRODUCTS } from "@/data/mock-products"
+import { ShoppingItem, ItemStatus, ShoppingList } from "@/types/schema"
+import { addItem, toggleItem, validateItem, deleteItem } from "@/app/actions/item"
+import { ListMenu } from "./ListMenu"
+import { useRealtimeList } from "@/hooks/use-realtime-list"
 
 interface TodoListProps {
     title: string
     items: ShoppingItem[]
+    listId: string
     isParentView?: boolean
+    templates?: ShoppingList[]
+    history?: ShoppingList[]
 }
 
-export function TodoList({ title, items: initialItems, isParentView = true }: TodoListProps) {
-    const [items, setItems] = React.useState<ShoppingItem[]>(initialItems)
+export function TodoList({
+    title,
+    items: initialItems,
+    listId,
+    isParentView = true,
+    templates = [],
+    history = []
+}: TodoListProps) {
+    // SSE real-time updates
+    const { list: realtimeList } = useRealtimeList(listId)
+    const items = (realtimeList?.items as unknown as ShoppingItem[]) || initialItems
+
     const [searchQuery, setSearchQuery] = React.useState("")
     const [newItemName, setNewItemName] = React.useState("")
-    const [newItemQuantity, setNewItemQuantity] = React.useState("1") // UI state as string
+    const [newItemQuantity, setNewItemQuantity] = React.useState("1")
+    const [isSubmitting, setIsSubmitting] = React.useState(false)
 
     const filteredItems = items.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    const handleToggle = (id: string, checked: boolean) => {
-        setItems(prev => prev.map(item =>
-            item.id === id ? { ...item, checked } : item
-        ))
-    }
-
-    const handleValidate = (id: string, approve: boolean) => {
-        if (approve) {
-            setItems(prev => prev.map(item =>
-                item.id === id ? { ...item, status: ItemStatus.VALIDATED } : item
-            ))
-        } else {
-            setItems(prev => prev.filter(item => item.id !== id)) // Or set to REJECTED if you want to keep history
+    const handleToggle = async (id: string, checked: boolean) => {
+        try {
+            await toggleItem(id, checked)
+        } catch (error) {
+            console.error(error)
         }
     }
 
-    const handleUpdateQuantity = (id: string, quantity: number) => {
-        setItems(prev => prev.map(item =>
-            item.id === id ? { ...item, quantity } : item
-        ))
+    const handleValidate = async (id: string, approve: boolean) => {
+        try {
+            await validateItem(id, approve)
+        } catch (error) {
+            console.error(error)
+        }
     }
 
-    const handleDelete = (id: string) => {
-        setItems(prev => prev.filter(item => item.id !== id))
+    const handleDelete = async (id: string) => {
+        if (!confirm("Supprimer cet article ?")) return
+        try {
+            await deleteItem(id)
+        } catch (error) {
+            console.error(error)
+        }
     }
 
-    const handleAddItem = (e: React.FormEvent) => {
+    const handleAddItem = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!newItemName.trim()) return
+        if (!newItemName.trim() || isSubmitting) return
 
+        setIsSubmitting(true)
         const quantityInt = parseInt(newItemQuantity) || 1
 
-        const newItem: ShoppingItem = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: newItemName,
-            quantity: quantityInt,
-            checked: false,
-            status: isParentView ? ItemStatus.VALIDATED : ItemStatus.PENDING,
-            createdAt: new Date(),
-            listId: "mock-list-id",
-            proposedBy: isParentView ? undefined : { name: "Moi" } as any // Mock User for proposedBy
+        try {
+            await addItem(listId, newItemName, quantityInt)
+            setNewItemName("")
+            setNewItemQuantity("1")
+        } catch (error) {
+            console.error(error)
+        } finally {
+            setIsSubmitting(false)
         }
-
-        setItems(prev => [...prev, newItem])
-        setNewItemName("")
-        setNewItemQuantity("1")
     }
-
-    const filteredProducts = MOCK_PRODUCTS.filter(product =>
-        product.name.toLowerCase().includes(newItemName.toLowerCase())
-    )
 
     return (
         <div className="flex flex-col h-full w-full max-w-3xl mx-auto pt-8 px-4">
             <div className="flex flex-col gap-4 mb-6">
-                <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                <div className="flex items-center justify-between">
+                    <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
+                    {isParentView && (
+                        <ListMenu
+                            listId={listId}
+                            templates={templates}
+                            history={history}
+                        />
+                    )}
+                </div>
                 <div className="relative">
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -114,6 +122,7 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
                                     item={item}
                                     isParentView={isParentView}
                                     onValidate={handleValidate}
+                                    onDelete={handleDelete}
                                 />
                             ))}
                         </div>
@@ -128,7 +137,6 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
                                     item={item}
                                     isParentView={isParentView}
                                     onToggle={handleToggle}
-                                    onUpdateQuantity={handleUpdateQuantity}
                                     onDelete={handleDelete}
                                 />
                             ))}
@@ -144,38 +152,14 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
             </ScrollArea>
 
             <div className="py-4 mt-auto">
-                <form onSubmit={handleAddItem} className="flex gap-2 items-end">
-                    <div className="flex-1">
-                        <Combobox
-                            value={newItemName ? MOCK_PRODUCTS.find(p => p.name === newItemName) : null}
-                            onValueChange={(val) => {
-                                if (val) setNewItemName(val.name)
-                            }}
-                        >
-                            <ComboboxInput
-                                placeholder={isParentView ? "Ajouter un produit..." : "Proposer un produit..."}
-                                className="w-full"
-                                value={newItemName}
-                                onChange={(e) => setNewItemName(e.target.value)}
-                                showClear={true}
-                            />
-                            <ComboboxContent side="top">
-                                <ComboboxList>
-                                    {filteredProducts.length > 0 ? (
-                                        filteredProducts.map((product) => (
-                                            <ComboboxItem key={product.id} value={product}>
-                                                {product.name}
-                                            </ComboboxItem>
-                                        ))
-                                    ) : (
-                                        <div className="py-6 text-center text-sm text-muted-foreground">
-                                            Aucun produit trouvé.
-                                        </div>
-                                    )}
-                                </ComboboxList>
-                            </ComboboxContent>
-                        </Combobox>
-                    </div>
+                <form onSubmit={handleAddItem} className="flex gap-2">
+                    <Input
+                        placeholder={isParentView ? "Ajouter un produit..." : "Proposer un produit..."}
+                        value={newItemName}
+                        onChange={(e) => setNewItemName(e.target.value)}
+                        className="flex-1"
+                        disabled={isSubmitting}
+                    />
                     <Input
                         type="number"
                         min="1"
@@ -183,8 +167,9 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
                         className="w-20"
                         value={newItemQuantity}
                         onChange={(e) => setNewItemQuantity(e.target.value)}
+                        disabled={isSubmitting}
                     />
-                    <Button type="submit" disabled={!MOCK_PRODUCTS.some(p => p.name.toLowerCase() === newItemName.toLowerCase())}>
+                    <Button type="submit" disabled={isSubmitting}>
                         {isParentView ? <Plus className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
                         {isParentView ? "Ajouter" : "Proposer"}
                     </Button>

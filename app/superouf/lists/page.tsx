@@ -1,9 +1,9 @@
-import { fakeData } from "@/lib/fake-data";
+import { getAggregatedLists } from "@/app/actions/analytics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default async function AggregatedListsPage() {
-    const lists = await fakeData.getAggregatedLists();
+    const lists = await getAggregatedLists();
 
     return (
         <div className="space-y-6">
@@ -33,7 +33,7 @@ export default async function AggregatedListsPage() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {lists.map((list) => (
+                                {lists.map((list: { id: string; householdId: string; name: string; isActive: boolean; itemCount: number; updatedAt: string }) => (
                                     <tr key={list.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                                         <td className="p-4 align-middle font-mono text-xs">{list.householdId}</td>
                                         <td className="p-4 align-middle">{list.itemCount} produits</td>
@@ -43,7 +43,7 @@ export default async function AggregatedListsPage() {
                                             </Badge>
                                         </td>
                                         <td className="p-4 align-middle text-right">
-                                            {list.updatedAt.toLocaleDateString()} {list.updatedAt.toLocaleTimeString()}
+                                            {new Date(list.updatedAt).toLocaleDateString("fr-FR")}
                                         </td>
                                     </tr>
                                 ))}

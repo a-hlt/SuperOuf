@@ -37,9 +37,25 @@ export async function POST(request: NextRequest) {
 
       const isMatch = await bcrypt.compare(pin, child.pinCode)
       if (isMatch) {
-        // Return child info - session will be created client-side
-        const { pinCode: _, ...childWithoutPin } = child
-        return NextResponse.json({ success: true, user: childWithoutPin })
+        const childSession = {
+          id: child._id!.toString(),
+          name: child.name,
+          role: "CHILD",
+          householdId: child.householdId!.toString(),
+        }
+
+        const res = NextResponse.json({ success: true, user: childSession })
+
+        // Set a simple cookie for child session
+        res.cookies.set("child-session", JSON.stringify(childSession), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 60 * 60 * 24 * 7, // 7 days
+          path: "/",
+        })
+
+        return res
       }
     }
 

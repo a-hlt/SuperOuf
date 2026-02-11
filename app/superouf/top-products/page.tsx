@@ -1,10 +1,10 @@
-import { fakeData } from "@/lib/fake-data";
+import { getTopProducts } from "@/app/actions/analytics";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
 export default async function TopProductsPage() {
-    const products = await fakeData.getTopProducts();
-    const maxRequests = Math.max(...products.map(p => p.totalRequests));
+    const products = await getTopProducts();
+    const maxRequests = products.length > 0 ? Math.max(...products.map((p: { totalRequests: number }) => p.totalRequests)) : 1;
 
     return (
         <div className="space-y-6">
