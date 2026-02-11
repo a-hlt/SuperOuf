@@ -1,0 +1,21 @@
+
+version: '3.8'
+
+services:
+  app:
+    container_name: superouf-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Database URL for Supabase (Replace with your actual URL in .env or here)
+      - DATABASE_URL=${DATABASE_URL}
+      # Auth Secret for Better-Auth
+      - AUTH_SECRET=${AUTH_SECRET}
+      # Base URL for Auth
+      - BETTER_AUTH_URL=http://localhost:3000
+    # env_file:
+    #   - .env.local 
