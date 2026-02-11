@@ -1,51 +1,48 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { TodoList } from "@/components/features/todo/TodoList"
+import { ItemStatus, ShoppingItem, Role } from "@/types/schema"
+import { useSession } from "@/lib/auth-client"
 
-interface Household {
-  id: string
-  name: string
-  inviteCode: string
-}
+const MOCK_ITEMS: ShoppingItem[] = [
+  {
+    id: "1", name: "Lait demi-écrémé", quantity: 2, checked: false,
+    status: ItemStatus.VALIDATED, createdAt: new Date(), listId: "1"
+  },
+  {
+    id: "2", name: "Oeufs bio", quantity: 12, checked: true,
+    status: ItemStatus.VALIDATED, createdAt: new Date(), listId: "1"
+  },
+  {
+    id: "3", name: "Pâtes", quantity: 1, checked: false,
+    status: ItemStatus.VALIDATED, createdAt: new Date(), listId: "1"
+  },
+  {
+    id: "4", name: "Bonbons Haribo", quantity: 1, checked: false,
+    status: ItemStatus.PENDING, createdAt: new Date(), listId: "1",
+    proposedBy: { name: "Léo" } as any
+  },
+  {
+    id: "5", name: "Coca Cola", quantity: 2, checked: false,
+    status: ItemStatus.PENDING, createdAt: new Date(), listId: "1",
+    proposedBy: { name: "Emma" } as any
+  },
+];
 
 export default function DashboardPage() {
-  const [household, setHousehold] = useState<Household | null>(null)
+  const { data: session } = useSession();
+  // 1 = PARENT (Admin view), 2 = PARENT (Standard), 3 = CHILD
+  // Determine Permissions based on client-side session or pass from server if preferred
+  // For now using client-side session hooks as typical for interactive components
 
-  useEffect(() => {
-    fetch("/api/household")
-      .then((res) => res.json())
-      .then((data) => setHousehold(data))
-      .catch(() => {})
-  }, [])
+  const role = (session?.user as any)?.role
+  const isParentView = role === "PARENT" || role === "SUPEROUF" || !role // Default to parent view if no role yet? Or restricted?
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Dashboard Parent</h2>
-
-      {household ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>{household.name}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Code famille : <span className="font-mono font-bold">{household.inviteCode}</span>
-            </p>
-            <p className="mt-4 text-muted-foreground">
-              Liste de courses à venir...
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-muted-foreground">
-              Vous n&apos;avez pas encore de foyer. Créez-en un pour commencer.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
+    <TodoList
+      title="Courses Semaine"
+      items={MOCK_ITEMS}
+      isParentView={isParentView}
+    />
+  );
 }
