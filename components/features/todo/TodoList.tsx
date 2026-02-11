@@ -6,8 +6,17 @@ import { Search, Plus, Send } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import {
+    Combobox,
+    ComboboxInput,
+    ComboboxContent,
+    ComboboxList,
+    ComboboxItem,
+    ComboboxEmpty,
+} from "@/components/ui/combobox"
 import { TodoItem } from "./TodoItem"
-import { ShoppingItem, ItemStatus } from "@/types/schema" // Use new types
+import { ShoppingItem, ItemStatus } from "@/types/schema"
+import { MOCK_PRODUCTS } from "@/data/mock-products"
 
 interface TodoListProps {
     title: string
@@ -41,6 +50,16 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
         }
     }
 
+    const handleUpdateQuantity = (id: string, quantity: number) => {
+        setItems(prev => prev.map(item =>
+            item.id === id ? { ...item, quantity } : item
+        ))
+    }
+
+    const handleDelete = (id: string) => {
+        setItems(prev => prev.filter(item => item.id !== id))
+    }
+
     const handleAddItem = (e: React.FormEvent) => {
         e.preventDefault()
         if (!newItemName.trim()) return
@@ -62,6 +81,10 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
         setNewItemName("")
         setNewItemQuantity("1")
     }
+
+    const filteredProducts = MOCK_PRODUCTS.filter(product =>
+        product.name.toLowerCase().includes(newItemName.toLowerCase())
+    )
 
     return (
         <div className="flex flex-col h-full w-full max-w-3xl mx-auto pt-8 px-4">
@@ -105,6 +128,8 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
                                     item={item}
                                     isParentView={isParentView}
                                     onToggle={handleToggle}
+                                    onUpdateQuantity={handleUpdateQuantity}
+                                    onDelete={handleDelete}
                                 />
                             ))}
                         </div>
@@ -119,13 +144,38 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
             </ScrollArea>
 
             <div className="py-4 mt-auto">
-                <form onSubmit={handleAddItem} className="flex gap-2">
-                    <Input
-                        placeholder={isParentView ? "Ajouter un produit..." : "Proposer un produit..."}
-                        value={newItemName}
-                        onChange={(e) => setNewItemName(e.target.value)}
-                        className="flex-1"
-                    />
+                <form onSubmit={handleAddItem} className="flex gap-2 items-end">
+                    <div className="flex-1">
+                        <Combobox
+                            value={newItemName ? MOCK_PRODUCTS.find(p => p.name === newItemName) : null}
+                            onValueChange={(val) => {
+                                if (val) setNewItemName(val.name)
+                            }}
+                        >
+                            <ComboboxInput
+                                placeholder={isParentView ? "Ajouter un produit..." : "Proposer un produit..."}
+                                className="w-full"
+                                value={newItemName}
+                                onChange={(e) => setNewItemName(e.target.value)}
+                                showClear={true}
+                            />
+                            <ComboboxContent side="top">
+                                <ComboboxList>
+                                    {filteredProducts.length > 0 ? (
+                                        filteredProducts.map((product) => (
+                                            <ComboboxItem key={product.id} value={product}>
+                                                {product.name}
+                                            </ComboboxItem>
+                                        ))
+                                    ) : (
+                                        <div className="py-6 text-center text-sm text-muted-foreground">
+                                            Aucun produit trouvé.
+                                        </div>
+                                    )}
+                                </ComboboxList>
+                            </ComboboxContent>
+                        </Combobox>
+                    </div>
                     <Input
                         type="number"
                         min="1"
@@ -134,7 +184,7 @@ export function TodoList({ title, items: initialItems, isParentView = true }: To
                         value={newItemQuantity}
                         onChange={(e) => setNewItemQuantity(e.target.value)}
                     />
-                    <Button type="submit">
+                    <Button type="submit" disabled={!MOCK_PRODUCTS.some(p => p.name.toLowerCase() === newItemName.toLowerCase())}>
                         {isParentView ? <Plus className="mr-2 h-4 w-4" /> : <Send className="mr-2 h-4 w-4" />}
                         {isParentView ? "Ajouter" : "Proposer"}
                     </Button>
