@@ -20,13 +20,15 @@ export const metadata: Metadata = {
   description: "Gérez vos courses en famille",
 };
 
+import { DynamicThemeProvider } from "@/components/ui/dynamic-theme-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
