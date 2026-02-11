@@ -1,20 +1,21 @@
 "use client"
 
-import { Check, X, Clock } from "lucide-react"
+import { Check, X, Clock, Trash2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import { ShoppingItem, ItemStatus } from "@/types/schema" // Use new types
+import { ShoppingItem, ItemStatus } from "@/types/schema"
 
 export interface TodoItemProps {
     item: ShoppingItem
     isParentView?: boolean
     onToggle?: (id: string, checked: boolean) => void
     onValidate?: (id: string, approve: boolean) => void
+    onDelete?: (id: string) => void
 }
 
-export function TodoItem({ item, isParentView, onToggle, onValidate }: TodoItemProps) {
+export function TodoItem({ item, isParentView, onToggle, onValidate, onDelete }: TodoItemProps) {
     const isPending = item.status === ItemStatus.PENDING
 
     return (
@@ -68,9 +69,14 @@ export function TodoItem({ item, isParentView, onToggle, onValidate }: TodoItemP
                         </Button>
                     </>
                 )}
-                {isParentView && !isPending && (
-                    <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-destructive">
-                        <X className="h-4 w-4" />
+                {isParentView && !isPending && onDelete && (
+                    <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        onClick={() => onDelete(item.id)}
+                    >
+                        <Trash2 className="h-4 w-4" />
                     </Button>
                 )}
             </div>

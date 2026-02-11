@@ -12,6 +12,7 @@ export function RegisterForm() {
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
+  const [role, setRole] = useState("PARENT")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
 
@@ -27,7 +28,7 @@ export function RegisterForm() {
         name,
       }, {
         body: {
-          role: "PARENT",
+          role,
         },
       })
 
@@ -77,6 +78,18 @@ export function RegisterForm() {
               onChange={(e) => setEmail(e.target.value)}
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Je suis</Label>
+            <select
+              id="role"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            >
+              <option value="PARENT">Parent</option>
+              <option value="SUPEROUF">Super OUF (Enseigne)</option>
+            </select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Mot de passe</Label>

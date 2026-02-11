@@ -26,7 +26,7 @@ const UserSchema = new Schema<IUser>(
     pinCode: { type: String },
     householdId: { type: Schema.Types.ObjectId, ref: "Household" },
   },
-  { timestamps: true }
+  { timestamps: true, collection: "user" }
 )
 
 export const User =

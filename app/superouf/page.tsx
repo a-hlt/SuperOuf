@@ -1,18 +1,18 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { fakeData } from "@/lib/fake-data";
-import { Users, FileText, ShoppingBasket, TrendingUp, ArrowRight } from "lucide-react";
+import { getGlobalStats, getTopProducts, getCategoryStats } from "@/app/actions/analytics";
+import { Users, FileText, ShoppingBasket, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 export default async function SuperOUFDashboard() {
-    const stats = await fakeData.getGlobalStats();
-    const topProducts = await fakeData.getTopProducts();
-    const categoryStats = await fakeData.getCategoryStats();
+    const stats = await getGlobalStats();
+    const topProducts = await getTopProducts();
+    const categoryStats = await getCategoryStats();
 
     // Slice for preview
     const previewProducts = topProducts.slice(0, 5);
-    const maxRequests = Math.max(...topProducts.map(p => p.totalRequests));
+    const maxRequests = topProducts.length > 0 ? Math.max(...topProducts.map((p: { totalRequests: number }) => p.totalRequests)) : 1;
 
     return (
         <div className="space-y-8">

@@ -1,42 +1,57 @@
 "use client";
 
 import { useState } from "react";
-import { Suggestion } from "@/lib/fake-data";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Plus, Tag } from "lucide-react";
+import { createSuggestion, deleteSuggestion } from "@/app/actions/analytics";
+import { useRouter } from "next/navigation";
+
+interface Suggestion {
+    id: string;
+    productName: string;
+    description: string;
+    discount?: string;
+    isActive: boolean;
+}
 
 interface SuggestionsManagerProps {
     initialSuggestions: Suggestion[];
 }
 
 export function SuggestionsManager({ initialSuggestions }: SuggestionsManagerProps) {
+    const router = useRouter();
     const [suggestions, setSuggestions] = useState<Suggestion[]>(initialSuggestions);
     const [newProduct, setNewProduct] = useState("");
     const [newDesc, setNewDesc] = useState("");
     const [newDiscount, setNewDiscount] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleAdd = () => {
-        if (!newProduct || !newDesc) return;
-
-        const newSuggestion: Suggestion = {
-            id: Math.random().toString(36).substr(2, 9),
-            productName: newProduct,
-            description: newDesc,
-            discount: newDiscount || undefined,
-            isActive: true,
-        };
-
-        setSuggestions([...suggestions, newSuggestion]);
-        setNewProduct("");
-        setNewDesc("");
-        setNewDiscount("");
+    const handleAdd = async () => {
+        if (!newProduct || !newDesc || submitting) return;
+        setSubmitting(true);
+        try {
+            const s = await createSuggestion(newProduct, newDesc, newDiscount || undefined);
+            setSuggestions([s, ...suggestions]);
+            setNewProduct("");
+            setNewDesc("");
+            setNewDiscount("");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const handleDelete = (id: string) => {
-        setSuggestions(suggestions.filter((s) => s.id !== id));
+    const handleDelete = async (id: string) => {
+        try {
+            await deleteSuggestion(id);
+            setSuggestions(suggestions.filter((s) => s.id !== id));
+        } catch (err) {
+            console.error(err);
+        }
     };
 
     return (
